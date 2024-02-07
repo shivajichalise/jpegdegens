@@ -1,5 +1,4 @@
 import { ethers } from "ethers"
-
 function getEth() {
   // @ts-ignore
   const eth = window.ethereum
@@ -33,13 +32,33 @@ async function run() {
     throw new Error("No Account")
   }
 
-  const hello = new ethers.Contract(
+  const provider = new ethers.BrowserProvider(getEth())
+
+  const counter = new ethers.Contract(
     "0x5fbdb2315678afecb367f032d93f642f64180aa3",
-    ["function hello() public pure returns (string memory)"],
-    new ethers.BrowserProvider(getEth())
+    [
+      "function count() public",
+      "function getCounter() public view returns (uint32)",
+    ],
+    await provider.getSigner()
   )
 
-  document.body.innerHTML = await hello.hello()
+  const el = document.createElement("div")
+  async function setCounter() {
+    el.innerHTML = await counter.getCounter()
+  }
+  setCounter()
+
+  const button = document.createElement("button")
+  button.innerText = "increment"
+  button.onclick = async function () {
+    const tx = await counter.count()
+    await tx.wait()
+    setCounter()
+  }
+
+  document.body.appendChild(el)
+  document.body.appendChild(button)
 }
 
 run()
